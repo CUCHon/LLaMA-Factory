@@ -26,7 +26,17 @@ class Evaluator:
         self.tokenizer.padding_side = "right" # avoid overflow issue in batched inference for llama2
         self.model = dispatch_model(self.model)
         self.template = get_template_and_fix_tokenizer(self.data_args.template, self.tokenizer)
+
+        
+
+        
         self.eval_template = get_eval_template(self.eval_args.lang)
+        '''
+        print(self.template)
+        print("###########")
+        print(self.eval_template)
+        exit()
+        '''
         self.choice_inputs = self._encode_choices()
 
     def _encode_choices(self) -> List[int]:
@@ -109,7 +119,9 @@ class Evaluator:
             "{:>15}: {:.2f}".format(category_name, 100 * np.mean(category_correct))
             for category_name, category_correct in category_corrects.items() if len(category_correct)
         ])
+        print("score_info"+"#"*50)
         print(score_info)
+
         if self.eval_args.save_dir is not None:
             os.makedirs(self.eval_args.save_dir, exist_ok=False)
             with open(os.path.join(self.eval_args.save_dir, "results.json"), "w", encoding="utf-8", newline="\n") as f:
