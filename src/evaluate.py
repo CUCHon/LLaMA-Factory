@@ -1,8 +1,9 @@
 from llmtuner import Evaluator
+from llmtuner import MyEvaluator
 
 
 def main():
-    evaluator = Evaluator()
+    evaluator = MyEvaluator()
     evaluator.eval()
 
 

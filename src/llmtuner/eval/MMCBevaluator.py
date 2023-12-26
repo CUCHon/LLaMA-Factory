@@ -18,7 +18,7 @@ from llmtuner.extras.constants import CHOICES, SUBJECTS
 from llmtuner.model import dispatch_model, get_eval_args, load_model_and_tokenizer
 
 
-class Evaluator:
+class MyEvaluator:
 
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         self.model_args, self.data_args, self.eval_args, finetuning_args = get_eval_args(args)
@@ -30,20 +30,20 @@ class Evaluator:
         
         self.eval_template = get_eval_template(self.eval_args.lang)
         #self.choice_inputs = self._encode_choices() ABCD
-'''
+    '''
     def _encode_choices(self) -> List[int]:#这个函数就是得到choice的token，也就是ABCD的token 就一个
         if isinstance(getattr(self.tokenizer, "tokenizer", None), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
             kwargs = dict(allowed_special="all")
         else:
             kwargs = dict(add_special_tokens=False)
         return [self.tokenizer.encode(self.eval_template.prefix + ch, **kwargs)[-1] for ch in CHOICES]
-'''
+    '''
     @torch.inference_mode()
     def batch_inference(self, batch_input: Dict[str, torch.Tensor]) -> List[str]:  #这个函数就是对模型输入一个batch，得到一个batch的输出，输出是每个样本对于每个选项哪个logits最高
         output_ids = self.model.generate(
         input_ids=batch_input['input_ids'],
         attention_mask=batch_input['attention_mask'],
-        max_length=512,  # Adjust max_length as needed
+        max_length=1024,  # Adjust max_length as needed
         do_sample=False,
         temperature=0  # Set temperature to 0.0 for deterministic output
     ).tolist()
@@ -55,6 +55,7 @@ class Evaluator:
     # Decode the real output ids to strings
         output_strs = self.tokenizer.batch_decode(real_output_ids, skip_special_tokens=True)
         print(output_strs[0])
+        exit()
         return (output_strs[0])
 
     '''
@@ -147,7 +148,7 @@ class Evaluator:
         )
         '''
         # 
-        file_path = '/aul/homes/hzhen011/LLaMA-Factory/evaluation/combined_output.csv'
+        file_path = '/home/guangzeng/ICHI/000/combined_output_100.csv'
         dataset = load_dataset('csv', data_files=file_path)
 
         inputs, outputs, labels = [], [], []
@@ -158,10 +159,12 @@ class Evaluator:
             query, resp, history = self.eval_template.format_example(
                 target_data=dataset[self.data_args.split][i],
                 support_set=support_set,
-                subject_name=categorys[subject]["name"],
+                #subject_name=categorys[subject]["name"],
                 use_history=self.template.use_history
             )
 
+            #print(query,"/n",resp,'/n',history)
+            #exit()
 
             input_ids, _ = self.template.encode_oneturn( #这里是使用大模型的模板把prompt加到大模型模板里，再encode 成token ids
                 tokenizer=self.tokenizer, query=query, resp=resp, history=history

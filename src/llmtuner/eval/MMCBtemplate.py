@@ -11,12 +11,12 @@ if TYPE_CHECKING:
 class EvalTemplate:
 
     system: str
-    choice: str
+  #  choice: str
     answer: str
     prefix: str
 
 
-'''
+    '''
     def parse_example(
         self,
         example: Dict[str, str] #输入一个字典，包含question 和 A B C d answer
@@ -24,7 +24,7 @@ class EvalTemplate:
         candidates = [self.choice.format(choice=ch, content=example[ch]) for ch in CHOICES if ch in example]#这里是保存每个选项还有每个选项对应的答案（有换行） 我们的数据集没必要留ABCD了
 
         return "".join([example["question"]] + candidates + [self.answer]), example["answer"]# 前面是返回 问题/n选项 答案/n 一个"Answer："。后面是返回答案对应的选项
-'''
+    '''
     def parse_example(
         self,
         example: Dict[str, str] #输入一个字典，包含question 和 A B C d answer
@@ -68,13 +68,13 @@ eval_templates: Dict[str, EvalTemplate] = {}
 def register_eval_template(
     name: str,
     system: str,
-    choice: str,
+    #choice: str,
     answer: str,
     prefix: str
 ) -> None:
     eval_templates[name] = EvalTemplate(
         system=system,
-        choice=choice,
+        #choice=choice,
         answer=answer,
         prefix=prefix
     )
@@ -98,7 +98,7 @@ register_eval_template(
 register_eval_template(
     name="中文样例",
     system="基于这个病人的医疗记录 请诊断他的病症------\n\n",
-    choice="\n{choice}. {content}",
+   # choice="\n{choice}. {content}",
     answer="\n诊断：",
     prefix="\n"
 )
@@ -107,7 +107,7 @@ register_eval_template(
 register_eval_template(
     name="en",
     system="Given the medical notes, please diagnose the patient-------\n\n",
-    choice="\n{choice}. {content}",
+    #choice="\n{choice}. {content}",
     answer="\nanswer：",
     prefix="\n"
 )
@@ -116,7 +116,7 @@ register_eval_template(
 register_eval_template(
     name="PSY",
     system="Given the , please----From 【labels】---\n\n",
-    choice="\n{choice}. {content}",
+    #choice="\n{choice}. {content}",
     answer="\nanswer：",
     prefix="\n"
 )
@@ -125,7 +125,7 @@ register_eval_template(
 register_eval_template(
     name="fr",
     system="Sur la base des notes médicales fournies, diagnostiquer le patient-------\n\n",
-    choice="\n{choice}. {content}",
+   # choice="\n{choice}. {content}",
     answer="\nrépondre：",
     prefix="\n"
 )
@@ -133,7 +133,7 @@ register_eval_template(
 register_eval_template(
     name="pt",
     system="Com base nas notas médicas fornecidas, diagnosticar o paciente-------\n\n",
-    choice="\n{choice}. {content}",
+  #  choice="\n{choice}. {content}",
     answer="\nresposta：",
     prefix="\n"
 )
@@ -142,7 +142,7 @@ register_eval_template(
 register_eval_template(
     name="sp",
     system="Basándose en las notas médicas dadas, diagnostique al paciente------\n\n",
-    choice="\n{choice}. {content}",
+   # choice="\n{choice}. {content}",
     answer="\nresponder：",
     prefix="\n"
 )
