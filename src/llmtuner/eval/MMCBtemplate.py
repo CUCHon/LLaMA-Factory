@@ -29,7 +29,7 @@ class EvalTemplate:
         self,
         example: Dict[str, str] #输入一个字典，包含question 和 A B C d answer
     ) -> Tuple[str, str]:
-        query, resp= example['Text'], example['Neutral/Change/Sustain']
+        query, resp= example['Text'], example['Sentiment']
         return query+self.answer, resp
 
 
@@ -106,7 +106,7 @@ register_eval_template(
 
 register_eval_template(
     name="en",
-    system="Given the medical notes, please diagnose the patient-------\n\n",
+    system="Given the medical notes, please diagnose the patient---Death/survival----\n\n",
     #choice="\n{choice}. {content}",
     answer="\nanswer：",
     prefix="\n"
@@ -114,17 +114,17 @@ register_eval_template(
 
 
 register_eval_template(
-    name="PSY",
-    system="Given the , please----From 【labels】---\n\n",
+    name="psy",
+    system="Given the conversation between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about changing the alcohol use. \n Answer:\n  Neutral(If the attitude is not obvious )\nPositive(If the patient has a tendency to reduce alcohol consumption )\nNegative (If the patient tend to maintain alcohol consumption)\n ",
     #choice="\n{choice}. {content}",
-    answer="\nanswer：",
+    answer="\nThe attitude is：",
     prefix="\n"
 )
 
 
 register_eval_template(
     name="fr",
-    system="Sur la base des notes médicales fournies, diagnostiquer le patient-------\n\n",
+    system="Sur la base des notes médicales fournies, diagnostiquer le patient-----Death/survival--\n\n",
    # choice="\n{choice}. {content}",
     answer="\nrépondre：",
     prefix="\n"
@@ -132,17 +132,10 @@ register_eval_template(
 
 register_eval_template(
     name="pt",
-    system="Com base nas notas médicas fornecidas, diagnosticar o paciente-------\n\n",
+    system="Com base nas notas médicas fornecidas, diagnosticar o paciente----Death/survival---\n\n",
   #  choice="\n{choice}. {content}",
     answer="\nresposta：",
     prefix="\n"
 )
 
 
-register_eval_template(
-    name="sp",
-    system="Basándose en las notas médicas dadas, diagnostique al paciente------\n\n",
-   # choice="\n{choice}. {content}",
-    answer="\nresponder：",
-    prefix="\n"
-)

@@ -1,4 +1,9 @@
 # Inspired by: https://github.com/hendrycks/test/blob/master/evaluate_flan.py
+import string
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sklearn.preprocessing import LabelEncoder
+
+import pandas as pd
 
 import os
 import json
@@ -21,6 +26,7 @@ from llmtuner.model import dispatch_model, get_eval_args, load_model_and_tokeniz
 class MyEvaluator:
 
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
+
         self.model_args, self.data_args, self.eval_args, finetuning_args = get_eval_args(args)
         self.model, self.tokenizer = load_model_and_tokenizer(self.model_args, finetuning_args)
         self.tokenizer.padding_side = "right" # avoid overflow issue in batched inference for llama2
@@ -43,19 +49,17 @@ class MyEvaluator:
         output_ids = self.model.generate(
         input_ids=batch_input['input_ids'],
         attention_mask=batch_input['attention_mask'],
-        max_length=1024,  # Adjust max_length as needed
+        max_length=2048,  # Adjust max_length as needed
         do_sample=False,
         temperature=0  # Set temperature to 0.0 for deterministic output
     ).tolist()
-        print(len(output_ids[0]))
+        #print(len(output_ids[0]))
     # Slice off the input part from each output sequence
         real_output_ids = [output_id[len(batch_input['input_ids'][i]):] for i, output_id in enumerate(output_ids)]
-        print(len(real_output_ids[0]))
-
+        #print(len(real_output_ids[0]))
     # Decode the real output ids to strings
         output_strs = self.tokenizer.batch_decode(real_output_ids, skip_special_tokens=True)
-        print(output_strs[0])
-        exit()
+
         return (output_strs[0])
 
     '''
@@ -177,13 +181,119 @@ class MyEvaluator:
                 inputs[i : i + self.eval_args.batch_size], return_attention_mask=True, return_tensors="pt"
             ).to(self.model.device)
             preds = self.batch_inference(batch_input)#推理
-            outputs += preds
+            '''
+            test=self.normalize_answer(preds)
+            print("##################")
+            print(labels[0])
+            print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+            print(test)
+            print("###########")
+            exit()
+            '''
+            outputs.append(preds)
 
+
+        
+        normalized_outputs = [self.normalize_answer(output) for output in outputs]
+        normalized_labels = [self.normalize_answer(label) for label in labels]
+        
+        matches = []
+        for output in normalized_outputs:
+            output_words = set(output.split())
+            match_found = False
+            for word in output_words:
+                if word in normalized_labels:
+                    matches.append(word)  # Append the matching label
+                    match_found = True
+                    break  # Break the loop once a match is found
+            if not match_found:
+                matches.append('neutral')  # Append 'Neutral' if no label matches
+
+
+
+        performance= self.calculate_multiclass_metrics(matches,normalized_labels)
+        print(performance)
+        #self.save_to_jsonl(outputs,labels)
+
+    
+    def calculate_multiclass_metrics(self, matches, labels):
+        # Initialize a label encoder and fit it to all possible labels
+        encoder = LabelEncoder()
+        encoder.fit(list(set(matches + labels)))
+
+        # Encode matches and labels
+        encoded_matches = encoder.transform(matches)
+        encoded_labels = encoder.transform(labels)
+
+        # Calculate accuracy
+        accuracy = accuracy_score(encoded_labels, encoded_matches)
+
+        # Calculate precision, recall, and F1-score for each class
+        precision, recall, f1, _ = precision_recall_fscore_support(encoded_labels, encoded_matches, average=None, labels=encoder.transform(encoder.classes_))
+        
+        # Calculate micro-averaged precision, recall, and F1-score
+        precision_micro, recall_micro, f1_micro, _ = precision_recall_fscore_support(encoded_labels, encoded_matches, average='micro')
+
+        # Prepare metrics for each class and overall metrics
+        metrics = {
+            'class_metrics': {},
+            'overall_metrics': {
+                'accuracy': accuracy,
+                'precision_micro': precision_micro,
+                'recall_micro': recall_micro,
+                'f1_score_micro': f1_micro
+            }
+        }
+
+        for i, label in enumerate(encoder.classes_):
+            metrics['class_metrics'][label] = {
+                'precision': precision[i],
+                'recall': recall[i],
+                'f1_score': f1[i]
+            }
+
+        return metrics
+            
+
+        
+    '''
         corrects = (np.array(outputs) == np.array(labels))
         category_name = categorys[subject]["category"]
         category_corrects[category_name] = np.concatenate([category_corrects[category_name], corrects], axis=0)
         category_corrects["Average"] = np.concatenate([category_corrects["Average"], corrects], axis=0)
         results[subject] = {str(i): outputs[i] for i in range(len(outputs))}
+    '''
+
+
+    # adapted the flowing from Squad v1.1 evaluation, without removing the articles.
+    def normalize_answer(self,s):
+        """Lower text and remove punctuation, and extra whitespace."""
+
+        def white_space_fix(text):
+            return ' '.join(text.split())
+
+        def remove_punc(text):
+            exclude = set(string.punctuation)
+            return ''.join(ch for ch in text if ch not in exclude)
+
+        def lower(text):
+            return text.lower()
+
+        return white_space_fix(remove_punc(lower(s)))
+
+
+    def save_to_jsonl(self,outputs, labels):
+        """Save the outputs and labels to a JSONL file."""
+        path=os.path.join(self.eval_args.save_dir, "results.json")
+        with open(path, 'w') as file:
+            for output, label in zip(outputs, labels):
+                data = {"output": output, "label": label}
+                json.dump(data, file)
+                file.write('\n')  # New line for next record
+        print(f"Data saved to {path}")
+
+
+'''
     def _save_results(self, category_corrects: Dict[str, np.ndarray], results: Dict[str, Dict[int, str]]) -> None:
         score_info = "\n".join([
             "{:>15}: {:.2f}".format(category_name, 100 * np.mean(category_correct))
@@ -199,8 +309,8 @@ class MyEvaluator:
 
             with open(os.path.join(self.eval_args.save_dir, "results.log"), "w", encoding="utf-8", newline="\n") as f:
                 f.write(score_info)
-
+'''  
 
 if __name__ == "__main__":
-    evaluator = Evaluator()
+    evaluator = MyEvaluator()
     evaluator.eval()
