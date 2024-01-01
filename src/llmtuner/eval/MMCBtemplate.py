@@ -115,7 +115,7 @@ register_eval_template(
 
 register_eval_template(
     name="psy",
-    system="Given the conversation between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about changing the alcohol use. \n Answer:\n  Neutral(If the attitude is not obvious )\nPositive(If the patient has a tendency to reduce alcohol consumption )\nNegative (If the patient tend to maintain alcohol consumption)\n ",
+    system="Given the conversation between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
     #choice="\n{choice}. {content}",
     answer="\nThe attitude is：",
     prefix="\n"
