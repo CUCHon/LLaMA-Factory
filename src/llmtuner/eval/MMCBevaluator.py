@@ -2,7 +2,7 @@
 import string
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from sklearn.preprocessing import LabelEncoder
-
+from datasets import load_dataset, DatasetDict
 import pandas as pd
 
 import os
@@ -44,6 +44,7 @@ class MyEvaluator:
             kwargs = dict(add_special_tokens=False)
         return [self.tokenizer.encode(self.eval_template.prefix + ch, **kwargs)[-1] for ch in CHOICES]
     '''
+
     @torch.inference_mode()
     def batch_inference(self, batch_input: Dict[str, torch.Tensor]) -> List[str]:  #这个函数就是对模型输入一个batch，得到一个batch的输出，输出是每个样本对于每个选项哪个logits最高
         output_ids = self.model.generate(
@@ -51,7 +52,7 @@ class MyEvaluator:
         attention_mask=batch_input['attention_mask'],
         max_length=2048,  # Adjust max_length as needed
         do_sample=False,
-        temperature=0  # Set temperature to 0.0 for deterministic output
+        temperature=0.5  # Set temperature to 0.0 for deterministic output
     ).tolist()
         #print(len(output_ids[0]))
     # Slice off the input part from each output sequence
@@ -60,8 +61,7 @@ class MyEvaluator:
     # Decode the real output ids to strings
         output_strs = self.tokenizer.batch_decode(real_output_ids, skip_special_tokens=True)
 
-        return (output_strs[0])
-
+        return output_strs
     '''
         generated_sequences = self.model.generate(**batch_input)
 
@@ -152,8 +152,24 @@ class MyEvaluator:
         )
         '''
         # 
-        file_path = '/home/guangzeng/ICHI/000/combined_output_100.csv'
-        dataset = load_dataset('csv', data_files=file_path)
+
+
+        # 设置 JSON 文件的路径
+        train_json_path = 'data/json_output/train.json'
+        test_json_path = 'data/json_output/test.json'
+
+
+        # 加载每个数据集分割
+        train_dataset = load_dataset('json', data_files=train_json_path)
+        test_dataset = load_dataset('json', data_files=test_json_path)
+
+        train_dataset=load_dataset('csv',data_files='data/combined_output_100.csv')
+        test_dataset=load_dataset('csv',data_files='data/combined_output_100.csv')
+        # 创建 DatasetDict
+        dataset= DatasetDict({
+            'train': train_dataset['train'],
+            'test': test_dataset['train']
+        })
 
         inputs, outputs, labels = [], [], []
 
@@ -190,7 +206,7 @@ class MyEvaluator:
             print("###########")
             exit()
             '''
-            outputs.append(preds)
+            outputs.extend(preds)
 
 
         
@@ -198,6 +214,7 @@ class MyEvaluator:
         normalized_labels = [self.normalize_answer(label) for label in labels]
         
         matches = []
+        meaningless_resp=0
         for output in normalized_outputs:
             output_words = set(output.split())
             match_found = False
@@ -207,19 +224,24 @@ class MyEvaluator:
                     match_found = True
                     break  # Break the loop once a match is found
             if not match_found:
-                matches.append('neutral')  # Append 'Neutral' if no label matches
+                matches.append('neutral')# Append 'Neutral' if no label matches
+                meaningless_resp+=1
+        
+                  
 
 
 
         performance= self.calculate_multiclass_metrics(matches,normalized_labels)
         print(performance)
-        #self.save_to_jsonl(outputs,labels)
+        print("wrong output is:",meaningless_resp)
+        self.save_to_json(performance,normalized_outputs,normalized_labels)
 
     
-    def calculate_multiclass_metrics(self, matches, labels):
-        # Initialize a label encoder and fit it to all possible labels
+    def calculate_multiclass_metrics(self,matches, labels):
+        # Initialize and fit a label encoder to the unique labels
         encoder = LabelEncoder()
-        encoder.fit(list(set(matches + labels)))
+        unique_labels = set(matches + labels)
+        encoder.fit(list(unique_labels))
 
         # Encode matches and labels
         encoded_matches = encoder.transform(matches)
@@ -228,31 +250,32 @@ class MyEvaluator:
         # Calculate accuracy
         accuracy = accuracy_score(encoded_labels, encoded_matches)
 
-        # Calculate precision, recall, and F1-score for each class
-        precision, recall, f1, _ = precision_recall_fscore_support(encoded_labels, encoded_matches, average=None, labels=encoder.transform(encoder.classes_))
-        
-        # Calculate micro-averaged precision, recall, and F1-score
+        # Calculate micro-average metrics
         precision_micro, recall_micro, f1_micro, _ = precision_recall_fscore_support(encoded_labels, encoded_matches, average='micro')
 
-        # Prepare metrics for each class and overall metrics
-        metrics = {
-            'class_metrics': {},
-            'overall_metrics': {
-                'accuracy': accuracy,
-                'precision_micro': precision_micro,
-                'recall_micro': recall_micro,
-                'f1_score_micro': f1_micro
-            }
+        # Calculate macro-average and weighted-average metrics
+        precision_macro, recall_macro, f1_macro, _ = precision_recall_fscore_support(encoded_labels, encoded_matches, average='macro')
+        precision_weighted, recall_weighted, f1_weighted, _ = precision_recall_fscore_support(encoded_labels, encoded_matches, average='weighted')
+
+        # Calculate metrics for each class
+        precision, recall, f1, _ = precision_recall_fscore_support(encoded_labels, encoded_matches, average=None, labels=range(len(unique_labels)))
+        class_metrics = {label: {'precision': p, 'recall': r, 'f1_score': f} for label, p, r, f in zip(encoder.classes_, precision, recall, f1)}
+
+        # Prepare and return metrics
+        overall_metrics = {
+            'accuracy': accuracy,
+            'precision_micro': precision_micro,
+            'recall_micro': recall_micro,
+            'f1_score_micro': f1_micro,
+            'precision_macro': precision_macro,
+            'recall_macro': recall_macro,
+            'f1_score_macro': f1_macro,
+            'precision_weighted': precision_weighted,
+            'recall_weighted': recall_weighted,
+            'f1_score_weighted': f1_weighted
         }
 
-        for i, label in enumerate(encoder.classes_):
-            metrics['class_metrics'][label] = {
-                'precision': precision[i],
-                'recall': recall[i],
-                'f1_score': f1[i]
-            }
-
-        return metrics
+        return {'class_metrics': class_metrics, 'overall_metrics': overall_metrics}
             
 
         
@@ -282,15 +305,30 @@ class MyEvaluator:
         return white_space_fix(remove_punc(lower(s)))
 
 
-    def save_to_jsonl(self,outputs, labels):
-        """Save the outputs and labels to a JSONL file."""
-        path=os.path.join(self.eval_args.save_dir, "results.json")
-        with open(path, 'w') as file:
-            for output, label in zip(outputs, labels):
-                data = {"output": output, "label": label}
-                json.dump(data, file)
-                file.write('\n')  # New line for next record
-        print(f"Data saved to {path}")
+    def save_to_json(self, dict_data, list1, list2, dict_filename='performance.json', list_filename='outputs.json'):
+        # Convert model to string for the path
+        model_str = str(self.model_args.model_name_or_path)
+        prompt_str=str(self.eval_args.lang)
+        temperature_str=str(0.1)
+        # Construct the directory path
+        directory_path = os.path.join(model_str, prompt_str, temperature_str)
+
+        # Create the directory if it doesn't exist
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+
+        # Save the dictionary to its file
+        dict_file_path = os.path.join(directory_path, dict_filename)
+        with open(dict_file_path, 'w', encoding='utf-8') as file:
+            json.dump(dict_data, file, ensure_ascii=False, indent=4)
+
+        # Save the lists to another file
+        lists_file_path = os.path.join(directory_path, list_filename)
+        with open(lists_file_path, 'w', encoding='utf-8') as file:
+            json.dump({"list1": list1, "list2": list2}, file, ensure_ascii=False, indent=4)
+
+        print(f"Dictionary data saved to {dict_file_path}")
+        print(f"List data saved to {lists_file_path}")
 
 
 '''

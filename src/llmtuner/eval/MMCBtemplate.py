@@ -31,6 +31,13 @@ class EvalTemplate:
     ) -> Tuple[str, str]:
         query, resp= example['Text'], example['Sentiment']
         return query+self.answer, resp
+        
+    def parse_example(
+        self,
+        example: Dict[str, str] #输入一个字典，包含question 和 A B C d answer
+    ) -> Tuple[str, str]:
+        query, resp= example['Text'], example['Sentiment']
+        return query+self.answer, resp
 
 
     def format_example(  #根据注册的模板来格式化样例
@@ -95,32 +102,40 @@ register_eval_template(
 )
 
 '''
-register_eval_template(
-    name="中文样例",
-    system="基于这个病人的医疗记录 请诊断他的病症------\n\n",
-   # choice="\n{choice}. {content}",
-    answer="\n诊断：",
-    prefix="\n"
-)
-
-
-register_eval_template(
-    name="en",
-    system="Given the medical notes, please diagnose the patient---Death/survival----\n\n",
-    #choice="\n{choice}. {content}",
-    answer="\nanswer：",
-    prefix="\n"
-)
 
 
 register_eval_template(
     name="psy",
-    system="Given the conversation between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
+    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
     #choice="\n{choice}. {content}",
-    answer="\nThe attitude is：",
+    answer="\nAnswer: The attitude is：",
     prefix="\n"
 )
 
+
+register_eval_template(
+    name="1cot",
+    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
+    #choice="\n{choice}. {content}",
+    answer="\nAnswer: The attitude is：",
+    prefix="\n"
+)
+
+register_eval_template(
+    name="zcot",
+    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
+    #choice="\n{choice}. {content}",
+    answer="\nAnswer: Let's think step by step, ",
+    prefix="\n"
+)
+
+register_eval_template(
+    name="ztm",
+    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
+    #choice="\n{choice}. {content}",
+    answer="\nAnswer: The attitude is：",
+    prefix="\n"
+)
 
 register_eval_template(
     name="fr",
@@ -139,3 +154,19 @@ register_eval_template(
 )
 
 
+register_eval_template(
+    name="zh",
+    system="基于这个病人的医疗记录 请诊断他的病症------\n\n",
+   # choice="\n{choice}. {content}",
+    answer="\n诊断：",
+    prefix="\n"
+)
+
+
+register_eval_template(
+    name="en",
+    system="Given the medical notes, please diagnose the patient---Death/survival----\n\n",
+    #choice="\n{choice}. {content}",
+    answer="\nanswer：",
+    prefix="\n"
+)
