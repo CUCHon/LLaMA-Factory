@@ -106,24 +106,24 @@ register_eval_template(
 
 register_eval_template(
     name="psy",
-    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
+    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's valence about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
     #choice="\n{choice}. {content}",
-    answer="\nAnswer: The attitude is：",
+    answer="\nAnswer: The valence is：",
     prefix="\n"
 )
 
 
 register_eval_template(
     name="1cot",
-    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
+    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's valence about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
     #choice="\n{choice}. {content}",
-    answer="\nAnswer: The attitude is：",
+    answer="\nAnswer：",
     prefix="\n"
 )
 
 register_eval_template(
     name="zcot",
-    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
+    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's valence about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
     #choice="\n{choice}. {content}",
     answer="\nAnswer: Let's think step by step, ",
     prefix="\n"
@@ -131,9 +131,9 @@ register_eval_template(
 
 register_eval_template(
     name="ztm",
-    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's attitude about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
+    system="Given a Motivational Interview record between an alcohol-abusing patient and a psychotherapist, please determine the patient's valence about reducing the alcohol use. \n From:\n1.  Neutral \n2. Positive(If the patient has a tendency to reduce alcohol consumption )\n3. Negative (If the patient tend to maintain alcohol consumption)\n ",
     #choice="\n{choice}. {content}",
-    answer="\nAnswer: The attitude is：",
+    answer="\n Based on the Motivational Interview record, answer the following Interaction of Thought questions, 1. what are the prime behaviors of the doctor and patient?\n 2. How is the engagement of patient in this interview.\n What is the patient's valence about reducing the alcohol use?",
     prefix="\n"
 )
 
